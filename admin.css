@@ -12,3 +12,7 @@
 .b3cpf table td {
     padding: 0.2rem 1rem 0.2rem 0;
 }
+
+.hidden {
+    display: none !important;
+}

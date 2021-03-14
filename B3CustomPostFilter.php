@@ -151,6 +151,11 @@
                         $this->b3cpf_errors()->add( 'error_no_nonce_match', esc_html__( 'Something went wrong, please try again.', 'b3cpf' ) );
                         return;
                     } else {
+    
+                        $filter_key      = ( isset( $_POST[ 'b3cpf_filter_key' ] ) ) ? $_POST[ 'b3cpf_filter_key' ] : false;
+                        $filter_label    = ( isset( $_POST[ 'b3cpf_filter_label' ] ) ) ? $_POST[ 'b3cpf_filter_label' ] : false;
+                        $filter_operator = ( isset( $_POST[ 'b3cpf_filter_operator' ] ) ) ? $_POST[ 'b3cpf_filter_operator' ] : false;
+                        
                         if ( strpos( $_POST[ 'b3cpf_filter_key' ], ' ' ) !== false ) {
                             $this->b3cpf_errors()->add( 'error_space_in_key', esc_html__( 'You can\'t have a space in your key.', 'b3cpf' ) );
                             return;

@@ -111,13 +111,22 @@
                         <input name="b3cpf_set_filters_nonce" type="hidden" value="<?php echo wp_create_nonce( 'b3cpf-set-filters-nonce' ); ?>" />
 
                         <label>
-                            <input name="b3cpf_filter_key" type="text" value=""/>
-                        </label>
-                        <label>
-                            <input name="b3cpf_filter_label" type="text" value=""/>
+                            <input name="b3cpf_filter_key" type="text" value="" placeholder="Meta key (no spaces)" />
                         </label>
 
-                        <input type="submit" class="button button-primary" value="<?php esc_html_e( 'Save filter', 'b3-cpf' ); ?>" />
+                        <label>
+                            <input name="b3cpf_filter_label" type="text" value="" placeholder="Filter label" />
+                        </label>
+
+                        <label>
+                            <select class="hidden" name="b3cpf_filter_operator">
+                                <option value="">Operator</option>
+                                <option value="not_empty">Not empty</option>
+                                <option value="empty">Empty</option>
+                            </select>
+                        </label>
+
+                        <input type="submit" class="button button-primary" value="<?php esc_html_e( 'Add filter', 'b3-cpf' ); ?>" />
                     </form>
 
                 </div>
