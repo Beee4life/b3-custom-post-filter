@@ -1,0 +1,14 @@
+.b3cpf table {
+    border:          0;
+    border-spacing:  0;
+    border-collapse: collapse;
+}
+
+.b3cpf table th {
+    text-align: left;
+}
+
+.b3cpf table th,
+.b3cpf table td {
+    padding: 0.2rem 1rem 0.2rem 0;
+}

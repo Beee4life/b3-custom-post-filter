@@ -49,12 +49,19 @@
                 );
 
                 // actions
-                register_activation_hook( __FILE__,     array( $this, 'b3_plugin_activation' ) );
-                register_deactivation_hook( __FILE__,   array( $this, 'b3_plugin_deactivation' ) );
+                register_activation_hook( __FILE__,     array( $this, 'b3cpf_plugin_activation' ) );
+                register_deactivation_hook( __FILE__,   array( $this, 'b3cpf_plugin_deactivation' ) );
     
-                add_action( 'restrict_manage_posts',        array( $this, 'b3_add_extra_filter' ), 20, 2 );
-                add_action( 'pre_get_posts',                array( $this, 'b3_pre_get_posts' ) );
-                add_filter( 'query_vars',                   array( $this, 'b3_add_query_vars' ) );
+                add_action( 'admin_menu',                   array( $this, 'b3cpf_add_admin_pages' ) );
+                add_action( 'admin_init',                   array( $this, 'b3cpf_errors' ) );
+                add_action( 'admin_init',                   array( $this, 'b3cpf_form_handling' ) );
+                add_action( 'admin_enqueue_scripts',        array( $this, 'b3cpf_add_scripts' ) );
+    
+                add_action( 'restrict_manage_posts',        array( $this, 'b3cpf_add_extra_filter' ), 20, 2 );
+                add_action( 'pre_get_posts',                array( $this, 'b3cpf_pre_get_posts' ) );
+                add_filter( 'query_vars',                   array( $this, 'b3cpf_add_query_vars' ) );
+    
+                add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'b3cpf_settings_link' ) );
     
             }
 
@@ -64,36 +71,164 @@
              *
              * @since 2.0.0
              */
-            public function b3_plugin_activation() {
+            public function b3cpf_plugin_activation() {
+                // set default post types
+                update_option( 'b3cpf_post_types', [ 'post', 'page' ], true );
             }
 
 
             /**
              * Do stuff upon plugin deactivation
              */
-            public function b3_plugin_deactivation() {
+            public function b3cpf_plugin_deactivation() {
             }
     
-            function b3_add_extra_filter( $post_type, $which ) {
-                // @TODO: get allowed post types
+            public function b3cpf_add_admin_pages() {
+                include 'b3-dashboard.php';
+                add_options_page( 'Post Filters', 'Post Filters', 'manage_options', 'b3cpf-dashboard', 'b3cpf_dashboard' );
+            }
+    
+            public function b3cpf_add_scripts() {
+                if ( is_admin() ) {
+                    wp_enqueue_style( 'b3cpf', plugins_url( 'admin.css', __FILE__ ), [] );
+                }
+            }
+    
+            public static function b3cpf_errors() {
+                static $wp_error; // Will hold global variable safely
+        
+                return isset( $wp_error ) ? $wp_error : ( $wp_error = new WP_Error( null, null, null ) );
+            }
+    
+            /*
+             * Displays error messages
+             */
+            public static function b3cpf_show_admin_notices() {
+                if ( $codes = B3CustomPostFilter::b3cpf_errors()->get_error_codes() ) {
+                    if ( is_wp_error( B3CustomPostFilter::b3cpf_errors() ) ) {
+                        $span_class = false;
+                        foreach ( $codes as $code ) {
+                            if ( strpos( $code, 'success' ) !== false ) {
+                                $span_class = 'notice-success ';
+                            } elseif ( strpos( $code, 'error' ) !== false ) {
+                                $span_class = 'error ';
+                            } elseif ( strpos( $code, 'warning' ) !== false ) {
+                                $span_class = 'notice-warning ';
+                            } elseif ( strpos( $code, 'info' ) !== false ) {
+                                $span_class = 'notice-info ';
+                            }
+                        }
+                        echo '<div id="message" class="notice ' . $span_class . 'is-dismissible">';
+                        foreach ( $codes as $code ) {
+                            $message = B3CustomPostFilter::b3cpf_errors()->get_error_message( $code );
+                            echo '<p class="">';
+                            echo $message;
+                            echo '</p>';
+                        }
+                        echo '</div>';
+                    }
+                }
+            }
+
+            public function b3cpf_form_handling() {
+                if ( isset( $_POST[ 'b3cpf_set_post_types_nonce' ] ) ) {
+                    if ( ! wp_verify_nonce( $_POST[ 'b3cpf_set_post_types_nonce' ], 'b3cpf-set-post-types-nonce' ) ) {
+                        $this->b3cpf_errors()->add( 'error_no_nonce_match', esc_html__( 'Something went wrong, please try again.', 'b3cpf' ) );
+                    } else {
+                        if ( empty( $_POST[ 'b3cpf_post_type' ] ) ) {
+                            delete_option( 'b3cpf_post_types' );
+                        } else {
+                            update_option( 'b3cpf_post_types', $_POST[ 'b3cpf_post_type' ], true );
+                        }
+                        $this->b3cpf_errors()->add( 'success_post_types_saved', esc_html__( 'Post types saved.', 'b3cpf' ) );
+                    }
+                }
+    
+                if ( isset( $_POST[ 'b3cpf_set_filters_nonce' ] ) ) {
+                    if ( ! wp_verify_nonce( $_POST[ 'b3cpf_set_filters_nonce' ], 'b3cpf-set-filters-nonce' ) ) {
+                        $this->b3cpf_errors()->add( 'error_no_nonce_match', esc_html__( 'Something went wrong, please try again.', 'b3cpf' ) );
+                        return;
+                    } else {
+                        if ( strpos( $_POST[ 'b3cpf_filter_key' ], ' ' ) !== false ) {
+                            $this->b3cpf_errors()->add( 'error_space_in_key', esc_html__( 'You can\'t have a space in your key.', 'b3cpf' ) );
+                            // return;
+                        }
+                        if ( empty( $_POST[ 'b3cpf_filter_key' ] ) || empty( $_POST[ 'b3cpf_filter_label' ] ) ) {
+                            if ( empty( $_POST[ 'b3cpf_filter_key' ] ) ) {
+                                $this->b3cpf_errors()->add( 'error_empty_key', esc_html__( 'You need to enter a filter key (no spaces).', 'b3cpf' ) );
+                            }
+                            if ( empty( $_POST[ 'b3cpf_filter_label' ] ) ) {
+                                $this->b3cpf_errors()->add( 'error_empty_value', esc_html__( 'You need to enter a filter label.', 'b3cpf' ) );
+                            }
+                            return;
+                        } else {
+                            $option[ $_POST[ 'b3cpf_filter_key' ] ] = $_POST[ 'b3cpf_filter_label' ];
                 
-                if ( 'bp_news' != $post_type ) {
+                            $all_filters = get_option( 'b3cpf_post_filters', [] );
+                            if ( empty( $all_filters ) ) {
+                                $new_options = $option;
+                            } else {
+                                if ( ! array_key_exists( $_POST[ 'b3cpf_filter_key' ], $all_filters ) ) {
+                                    $new_options = array_merge( $all_filters, $option );
+                                } else {
+                                    $this->b3cpf_errors()->add( 'error_key_exists', sprintf( __( 'The key "%s" already exists.', 'b3cpf' ), $_POST[ 'b3cpf_filter_key' ] ) );
+                                    return;
+                                }
+                            }
+                
+                            update_option( 'b3cpf_post_filters', $new_options, true );
+                        }
+                    }
+                }
+    
+                if ( isset( $_POST[ 'b3cpf_remove_filters_nonce' ] ) ) {
+                    if ( ! wp_verify_nonce( $_POST[ 'b3cpf_remove_filters_nonce' ], 'b3cpf-remove-filters-nonce' ) ) {
+                        $this->b3cpf_errors()->add( 'error_no_nonce_match', esc_html__( 'Something went wrong, please try again.', 'b3cpf' ) );
+                        return;
+                    } else {
+                        // echo '<pre>'; var_dump($_POST); echo '</pre>'; exit;
+                        if ( ! empty( $_POST[ 'b3cpf_filters' ] ) ) {
+                            $stored_post_filters = get_option( 'b3cpf_post_filters', [] );
+                            foreach( $_POST[ 'b3cpf_filters' ] as $filter ) {
+                                // echo '<pre>'; var_dump($filter); echo '</pre>'; exit;
+                                if ( array_key_exists( $filter, $stored_post_filters ) ) {
+                                    unset( $stored_post_filters[ $filter ] );
+                                }
+                            }
+                            // echo '<pre>'; var_dump($stored_post_filters); echo '</pre>'; exit;
+                            if ( ! empty( $stored_post_filters ) ) {
+                                update_option( 'b3cpf_post_filters', $stored_post_filters, true );
+                            } else {
+                                delete_option( 'b3cpf_post_filters' );
+                            }
+                        }
+                    }
+                }
+            }
+    
+            public function b3cpf_add_extra_filter( $post_type, $which ) {
+                $allowed_post_types  = get_option( 'b3cpf_post_types', [ 'post', 'page' ] );
+                $stored_post_filters = get_option( 'b3cpf_post_filters', [] );
+                
+                if ( ! in_array( $post_type, $allowed_post_types ) ) {
                     return;
                 }
         
-                // create filter options
-                // output html for taxonomy dropdown filter
-                echo '<select name="custom_filter" id="custom_filter" class="postform">';
-                echo '<option value="">' . __( 'Your filters', 'boilerplate' ) . '</option>';
-                echo '<option value="xxx">XXX</option>';
+                // create filter options / output html for taxonomy dropdown filter
+                echo '<select name="b3_custom_filter" id="b3_custom_filter" class="postform">';
+                echo '<option value="">' . __( 'Your filters', 'b3-cpf' ) . '</option>';
+                foreach( $stored_post_filters as $key => $label ) {
+                    echo '<option value="' . $key . '">' . $label . '</option>';
+                }
                 echo '</select>';
             }
     
-            function b3_pre_get_posts( $query ) {
+            public function b3cpf_pre_get_posts( $query ) {
                 if ( is_admin() && $query->is_main_query() ) {
-                    // echo '<pre>'; var_dump($query->query_vars); echo '</pre>'; exit;
-                    if ( ! empty( $query->query['custom_filter'] ) ) {
-                        $new_query = get_new_query( $query->get( 'custom_filter' ) );
+                    // echo '<pre>'; var_dump($query); echo '</pre>'; exit;
+                    if ( ! empty( $query->query['b3_custom_filter'] ) ) {
+                        $new_query = $this->b3_get_new_query( $query->query['b3_custom_filter'] );
+                        // echo '<pre>'; var_dump($new_query); echo '</pre>'; exit;
                 
                         if ( $new_query ) {
                             $query->set( 'meta_query', $new_query );
@@ -102,27 +237,42 @@
                 }
             }
     
-            function b3_add_query_vars( $vars ) {
-                $vars[] = 'custom_filter';
+            public function b3cpf_add_query_vars( $vars ) {
+                $vars[] = 'b3_custom_filter';
         
                 return $vars;
             }
     
-            function get_new_query( $value ) {
+            public function b3_get_new_query( $value ) {
                 if ( ! $value ) {
                     return false;
                 }
         
                 $meta_query = [
                     [
-                        'key'   => 'test_item',
-                        'value' => $value,
+                        'key'     => $value,
+                        'value'   => '',
+                        'compare' => '!=',
                     ],
                 ];
         
                 return $meta_query;
             }
     
+            /*
+             * Add settings link on plugin page
+             *
+             * @param $links
+             *
+             * @return array
+             */
+            public function b3cpf_settings_link( $links ) {
+                $settings_link = [ 'settings' => '<a href="options-general.php?page=b3cpf-dashboard">' . esc_html__( 'Settings', 'b3-cpf' ) . '</a>' ];
+                $links         = array_merge( $settings_link, $links );
+        
+                return $links;
+            }
+            
         }
 
         /**
