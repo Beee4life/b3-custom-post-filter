@@ -131,6 +131,7 @@
             }
 
             public function b3cpf_form_handling() {
+                // Set post types
                 if ( isset( $_POST[ 'b3cpf_set_post_types_nonce' ] ) ) {
                     if ( ! wp_verify_nonce( $_POST[ 'b3cpf_set_post_types_nonce' ], 'b3cpf-set-post-types-nonce' ) ) {
                         $this->b3cpf_errors()->add( 'error_no_nonce_match', esc_html__( 'Something went wrong, please try again.', 'b3cpf' ) );
@@ -144,6 +145,7 @@
                     }
                 }
     
+                // Add filter
                 if ( isset( $_POST[ 'b3cpf_set_filters_nonce' ] ) ) {
                     if ( ! wp_verify_nonce( $_POST[ 'b3cpf_set_filters_nonce' ], 'b3cpf-set-filters-nonce' ) ) {
                         $this->b3cpf_errors()->add( 'error_no_nonce_match', esc_html__( 'Something went wrong, please try again.', 'b3cpf' ) );
@@ -181,6 +183,7 @@
                     }
                 }
     
+                // Remove filter
                 if ( isset( $_POST[ 'b3cpf_remove_filters_nonce' ] ) ) {
                     if ( ! wp_verify_nonce( $_POST[ 'b3cpf_remove_filters_nonce' ], 'b3cpf-remove-filters-nonce' ) ) {
                         $this->b3cpf_errors()->add( 'error_no_nonce_match', esc_html__( 'Something went wrong, please try again.', 'b3cpf' ) );
