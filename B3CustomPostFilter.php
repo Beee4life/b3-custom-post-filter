@@ -151,7 +151,7 @@
                     } else {
                         if ( strpos( $_POST[ 'b3cpf_filter_key' ], ' ' ) !== false ) {
                             $this->b3cpf_errors()->add( 'error_space_in_key', esc_html__( 'You can\'t have a space in your key.', 'b3cpf' ) );
-                            // return;
+                            return;
                         }
                         if ( empty( $_POST[ 'b3cpf_filter_key' ] ) || empty( $_POST[ 'b3cpf_filter_label' ] ) ) {
                             if ( empty( $_POST[ 'b3cpf_filter_key' ] ) ) {
@@ -186,16 +186,13 @@
                         $this->b3cpf_errors()->add( 'error_no_nonce_match', esc_html__( 'Something went wrong, please try again.', 'b3cpf' ) );
                         return;
                     } else {
-                        // echo '<pre>'; var_dump($_POST); echo '</pre>'; exit;
                         if ( ! empty( $_POST[ 'b3cpf_filters' ] ) ) {
                             $stored_post_filters = get_option( 'b3cpf_post_filters', [] );
                             foreach( $_POST[ 'b3cpf_filters' ] as $filter ) {
-                                // echo '<pre>'; var_dump($filter); echo '</pre>'; exit;
                                 if ( array_key_exists( $filter, $stored_post_filters ) ) {
                                     unset( $stored_post_filters[ $filter ] );
                                 }
                             }
-                            // echo '<pre>'; var_dump($stored_post_filters); echo '</pre>'; exit;
                             if ( ! empty( $stored_post_filters ) ) {
                                 update_option( 'b3cpf_post_filters', $stored_post_filters, true );
                             } else {
@@ -225,10 +222,8 @@
     
             public function b3cpf_pre_get_posts( $query ) {
                 if ( is_admin() && $query->is_main_query() ) {
-                    // echo '<pre>'; var_dump($query); echo '</pre>'; exit;
                     if ( ! empty( $query->query['b3_custom_filter'] ) ) {
                         $new_query = $this->b3_get_new_query( $query->query['b3_custom_filter'] );
-                        // echo '<pre>'; var_dump($new_query); echo '</pre>'; exit;
                 
                         if ( $new_query ) {
                             $query->set( 'meta_query', $new_query );

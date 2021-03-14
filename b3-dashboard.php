@@ -40,10 +40,6 @@
                     <?php esc_html_e( 'Set allowed post types', 'b3-cpf' ); ?>
                 </h2>
                 
-<!--                <p>-->
-<!--                    --><?php //esc_html_e( 'Select on which post types the filter should appear.', 'b3-cpf' ); ?>
-<!--                </p>-->
-
                 <form method="post">
                     <input name="b3cpf_set_post_types_nonce" type="hidden" value="<?php echo wp_create_nonce( 'b3cpf-set-post-types-nonce' ); ?>" />
                     
