@@ -178,12 +178,13 @@
                                 if ( ! array_key_exists( $_POST[ 'b3cpf_filter_key' ], $all_filters ) ) {
                                     $new_options = array_merge( $all_filters, $option );
                                 } else {
-                                    $this->b3cpf_errors()->add( 'error_key_exists', sprintf( __( 'The key "%s" already exists.', 'b3cpf' ), $_POST[ 'b3cpf_filter_key' ] ) );
+                                    $this->b3cpf_errors()->add( 'error_key_exists', sprintf( esc_html__( 'The key "%s" already exists.', 'b3cpf' ), $_POST[ 'b3cpf_filter_key' ] ) );
                                     return;
                                 }
                             }
                 
                             update_option( 'b3cpf_post_filters', $new_options, true );
+                            $this->b3cpf_errors()->add( 'success_filters_added', esc_html__( 'Filter added.', 'b3cpf' ) );
                         }
                     }
                 }
@@ -206,6 +207,7 @@
                             } else {
                                 delete_option( 'b3cpf_post_filters' );
                             }
+                            $this->b3cpf_errors()->add( 'success_filters_removed', esc_html__( 'Filter removed.', 'b3cpf' ) );
                         }
                     }
                 }
@@ -218,14 +220,16 @@
                 if ( ! in_array( $post_type, $allowed_post_types ) ) {
                     return;
                 }
-        
-                // create filter options / output html for taxonomy dropdown filter
-                echo '<select name="b3_custom_filter" id="b3_custom_filter" class="postform">';
-                echo '<option value="">' . __( 'Your filters', 'b3-cpf' ) . '</option>';
-                foreach( $stored_post_filters as $key => $label ) {
-                    echo '<option value="' . $key . '">' . $label . '</option>';
+                
+                if ( ! empty( $stored_post_filters ) ) {
+                    // create filter options / output html for taxonomy dropdown filter
+                    echo '<select name="b3_custom_filter" id="b3_custom_filter" class="postform">';
+                    echo '<option value="">' . __( 'Your filters', 'b3-cpf' ) . '</option>';
+                    foreach( $stored_post_filters as $key => $label ) {
+                        echo '<option value="' . $key . '">' . $label . '</option>';
+                    }
+                    echo '</select>';
                 }
-                echo '</select>';
             }
     
             public function b3cpf_pre_get_posts( $query ) {
