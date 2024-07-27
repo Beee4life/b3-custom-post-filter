@@ -106,26 +106,29 @@
             public static function b3cpf_show_admin_notices() {
                 if ( $codes = B3CustomPostFilter::b3cpf_errors()->get_error_codes() ) {
                     if ( is_wp_error( B3CustomPostFilter::b3cpf_errors() ) ) {
-                        $span_class = false;
-                        foreach ( $codes as $code ) {
-                            if ( strpos( $code, 'success' ) !== false ) {
+                        switch( $codes ) {
+                            case strpos( $code, 'success' ) !== false:
                                 $span_class = 'notice-success ';
-                            } elseif ( strpos( $code, 'error' ) !== false ) {
+                                break;
+                            case strpos( $code, 'error' ) !== false:
                                 $span_class = 'error ';
-                            } elseif ( strpos( $code, 'warning' ) !== false ) {
+                                break;
+                            case strpos( $code, 'warning' ) !== false:
                                 $span_class = 'notice-warning ';
-                            } elseif ( strpos( $code, 'info' ) !== false ) {
+                                break;
+                            case strpos( $code, 'info' ) !== false:
                                 $span_class = 'notice-info ';
-                            }
+                                break;
+                            default:
+                                $span_class = '';
                         }
-                        echo '<div id="message" class="notice ' . $span_class . 'is-dismissible">';
+                        
+                        $messages = '';
                         foreach ( $codes as $code ) {
                             $message = B3CustomPostFilter::b3cpf_errors()->get_error_message( $code );
-                            echo '<p class="">';
-                            echo $message;
-                            echo '</p>';
+                            $messages .= sprintf( '<p class="">%s</p>', $message );
                         }
-                        echo '</div>';
+                        echo sprintf( '<div id="message" class="notice %sis-dismissible">%s</div>', $span_class, $messages );
                     }
                 }
             }
@@ -223,19 +226,21 @@
                 
                 if ( ! empty( $stored_post_filters ) ) {
                     // create filter options / output html for taxonomy dropdown filter
-                    echo '<select name="b3_custom_filter" id="b3_custom_filter" class="postform">';
-                    echo '<option value="">' . __( 'Your filters', 'b3-cpf' ) . '</option>';
+                    $first_option = '<option value="">' . __( 'Your filters', 'b3-cpf' ) . '</option>';
+                    $your_filters = '';
+
                     foreach( $stored_post_filters as $key => $label ) {
-                        echo '<option value="' . $key . '">' . $label . '</option>';
+                        $your_filters .= '<option value="' . $key . '">' . $label . '</option>';
                     }
-                    echo '</select>';
+
+                    echo sprintf( '<select name="b3_cpf" id="b3_cpf" class="postform">%s%s</select>', $first_option, $your_filters );
                 }
             }
     
             public function b3cpf_pre_get_posts( $query ) {
                 if ( is_admin() && $query->is_main_query() ) {
-                    if ( ! empty( $query->query['b3_custom_filter'] ) ) {
-                        $new_query = $this->b3_get_new_query( $query->query['b3_custom_filter'] );
+                    if ( ! empty( $query->query['b3_cpf'] ) ) {
+                        $new_query = $this->b3_get_new_query( $query->query['b3_cpf'] );
                 
                         if ( $new_query ) {
                             $query->set( 'meta_query', $new_query );
@@ -245,7 +250,7 @@
             }
     
             public function b3cpf_add_query_vars( $vars ) {
-                $vars[] = 'b3_custom_filter';
+                $vars[] = 'b3_cpf';
         
                 return $vars;
             }
