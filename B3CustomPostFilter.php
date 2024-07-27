@@ -5,7 +5,7 @@
     Description:        ...
     Version:            0.1
     Requires at least:  4.3
-    Tested up to:       5.7
+    Tested up to:       6.6.1
     Requires PHP:       5.6
     Author:             Beee
     Author URI:         https://berryplasman.com
