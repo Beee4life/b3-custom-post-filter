@@ -62,7 +62,8 @@
                 add_filter( 'query_vars',                   array( $this, 'b3cpf_add_query_vars' ) );
     
                 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'b3cpf_settings_link' ) );
-    
+                
+                include 'functions.php';
             }
 
 
