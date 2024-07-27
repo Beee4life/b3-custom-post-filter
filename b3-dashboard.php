@@ -14,7 +14,6 @@
         $allowed_post_types  = apply_filters( 'b3cpf_allowed_post_types', get_option( 'b3cpf_post_types', [] ) );
         $all_filters         = get_option( 'b3cpf_post_filters' );
         $excluded_post_types = apply_filters( 'b3cpf_excluded_post_types', b3_default_excluded_post_types() );
-        // echo '<pre>'; var_dump($excluded_post_types); echo '</pre>'; exit;
         ?>
         
         <div class="wrap b3cpf">
@@ -36,7 +35,6 @@
                     <ul>
                         <?php foreach( $all_post_types as $post_type => $values ) { ?>
                             <?php if ( ! in_array( $post_type, $excluded_post_types ) ) { ?>
-                                <?php //error_log($post_type); ?>
                                 <?php $selected = ( in_array( $post_type, $allowed_post_types ) ) ? ' checked="checked"' : false; ?>
                                 <li>
                                     <label>
